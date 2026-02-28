@@ -1,0 +1,1285 @@
+A rigorous, implementation-grounded foundation for Artificial General Intelligence development.
+Not a roadmap. Not a manifesto. A working engineering and epistemological base.
+
+
+⚠️ Preface: What This Is Not
+This is not a collection of philosophical musings about AGI.
+This is not a list of requirements that assumes AGI is imminent.
+This is not aligned with hype cycles.
+This is a minimum viable epistemic and engineering foundation — the ground floor every serious AGI system must be built upon before any capability scaling is meaningful.
+
+Table of Contents
+
+Core Thesis
+What AGI Actually Requires — First Principles
+The Five Pillars Architecture
+Pillar I — Persistent & Hierarchical Memory
+Pillar II — Calibrated Uncertainty (Epistemic Honesty)
+Pillar III — Causal World Modeling
+Pillar IV — Constitutional Self-Correction
+Pillar V — Goal Coherence Under Distribution Shift
+Integration Architecture
+What Current LLMs Get Wrong (and Why It Matters)
+Training Philosophy
+Safety Is Not a Feature — It Is the Architecture
+Evaluation Criteria for AGI Readiness
+Open Problems
+Contributing
+
+
+1. Core Thesis
+The central claim of this repository:
+
+Current approaches to AI — including the largest transformer-based language models — are missing not scale but structure. Scaling a next-token predictor does not converge to general intelligence. What is missing are five systemic properties that human cognition exhibits by default and that no current model exhibits robustly: persistent memory, calibrated uncertainty, causal reasoning, constitutional self-correction, and goal coherence.
+
+This is not an argument against neural networks or large-scale pretraining. It is an argument that the architecture of a general intelligence is not the same as the architecture of a powerful pattern-matcher, no matter how large.
+The goal of this repository is to define, implement, test, and iterate on those five missing properties — systematically, with falsifiable claims and working code.
+
+2. What AGI Actually Requires — First Principles
+Before building, we need a precise definition. Not philosophical — operational.
+2.1 Minimal Definition
+An AGI system must be able to:
+RequirementWhy It MattersAcquire new skills without full retrainingHumans learn continuously; retraining from scratch is not intelligenceTransfer knowledge across domains it was not explicitly trained onThis is the literal definition of generalizationOperate across time with coherent memory and evolving goalsA system with no memory is not an agent — it is a functionKnow what it doesn't know and act accordinglyWithout calibrated uncertainty, capability becomes dangerCorrect its own reasoning before, during, and after actingSelf-correction is the foundation of reliable autonomous actionMaintain value stability under novel inputs and distribution shiftsGoals that drift under pressure are not goals — they are suggestions
+2.2 What AGI Is NOT Required To Do (Common Misconceptions)
+
+Be conscious or sentient
+Pass the Turing test (it is an insufficient and misdirecting benchmark)
+Run on human-like biological substrate
+Have human-level performance on every benchmark simultaneously on day one
+Be a single monolithic model
+
+2.3 The Falsifiability Requirement
+Every claim in this repository must be falsifiable. If a subsystem cannot be tested against a measurable criterion, it does not belong in this codebase. This is non-negotiable.
+
+3. The Five Pillars Architecture
+┌─────────────────────────────────────────────────────────────────────┐
+│                        AGI CORE SYSTEM                              │
+│                                                                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │
+│  │  PILLAR I   │  │  PILLAR II  │  │  PILLAR III │                │
+│  │  Persistent │  │ Calibrated  │  │   Causal    │                │
+│  │   Memory    │◄─┤ Uncertainty │◄─┤   World     │                │
+│  │  (Storage)  │  │ (Epistemic) │  │  Modeling   │                │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                │
+│         │                │                │                         │
+│         └────────────────┼────────────────┘                         │
+│                          ▼                                          │
+│              ┌───────────────────────┐                             │
+│              │  INTEGRATION LAYER    │                             │
+│              │  (Reasoning Engine)   │                             │
+│              └───────────┬───────────┘                             │
+│                          │                                          │
+│         ┌────────────────┼────────────────┐                        │
+│         ▼                ▼                ▼                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐               │
+│  │  PILLAR IV  │  │  PILLAR V   │  │   SAFETY    │               │
+│  │Constitutional│  │    Goal     │  │  MONITOR    │               │
+│  │    Self-    │  │  Coherence  │  │  (Always    │               │
+│  │ Correction  │  │             │  │    On)      │               │
+│  └─────────────┘  └─────────────┘  └─────────────┘               │
+└─────────────────────────────────────────────────────────────────────┘
+Each pillar is:
+
+Independently testable — can be evaluated in isolation
+Composable — designed to work with the other four
+Failure-transparent — fails visibly and loudly rather than silently degrading
+
+
+4. Pillar I — Persistent & Hierarchical Memory
+The Problem
+Current LLMs have no memory between sessions. This is not merely a product limitation — it is a fundamental architectural incompatibility with general intelligence. An entity that begins from zero on every interaction is not an agent. It is a very sophisticated lookup.
+Even within a session, transformer attention is flat. There is no distinction between "I learned this from a million documents" and "the user just told me this 30 seconds ago." All context is treated with equal structural weight.
+The Three-Layer Model
+Working Memory (seconds to hours)
+
+Contents of the current context window
+Active goals and subgoals
+Recent tool calls and their results
+Volatile: discarded at session end unless explicitly consolidated
+
+Episodic Memory (hours to years)
+
+Specific interactions, decisions, and their outcomes
+Timestamped and tagged with emotional/importance valence
+Queryable by semantic similarity
+Supports counterfactual reasoning: "last time I did X, Y happened"
+
+Semantic Memory (permanent, generalized)
+
+Abstracted knowledge distilled from episodes
+Confidence-weighted facts and relationships
+Domain-organized knowledge graph
+Updated continuously through consolidation
+
+Consolidation — The Critical Process
+Memory consolidation is what transforms raw experience into lasting knowledge. In biological systems, this happens during sleep. In an AGI system, it must happen explicitly, programmatically, and verifiably.
+CONSOLIDATION PIPELINE:
+
+Episodes (raw) 
+    │
+    ▼ [Importance Scoring]
+Filtered Episodes
+    │
+    ▼ [Pattern Extraction via Summarization Model]
+Abstract Patterns
+    │
+    ▼ [Contradiction Check against Semantic Memory]
+Validated Patterns
+    │
+    ▼ [Confidence Weighting]
+Semantic Memory Update
+    │
+    ▼ [Meta-Memory Update: "I now know that I know X"]
+Implementation Skeleton
+pythonfrom dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Optional
+import hashlib
+import json
+
+
+@dataclass
+class MemoryTrace:
+    """Atomic unit of experience storage."""
+    content: Any
+    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    importance: float = 0.5          # [0, 1] — scored at write time
+    confidence: float = 0.8          # [0, 1] — how certain is this trace
+    source: str = "interaction"      # interaction | inference | consolidation
+    memory_type: str = "episodic"    # episodic | semantic | procedural
+    tags: list = field(default_factory=list)
+    trace_id: str = field(default_factory=lambda: hashlib.sha256(
+        str(datetime.utcnow()).encode()
+    ).hexdigest()[:12])
+
+
+class HierarchicalMemorySystem:
+    """
+    Three-layer persistent memory system for AGI agents.
+    
+    Design principles:
+    - Write fast, read semantically
+    - Importance determines persistence
+    - Contradictions trigger explicit resolution, not silent overwriting
+    - Meta-memory is a first-class citizen
+    """
+
+    def __init__(self, vector_store, consolidation_interval: int = 20):
+        self.vector_store = vector_store
+        self.working_memory: list[MemoryTrace] = []
+        self.consolidation_interval = consolidation_interval
+        self._interaction_count = 0
+
+    def observe(self, content: Any, importance: float = 0.5,
+                tags: list = None) -> MemoryTrace:
+        """Record a new observation into working memory."""
+        trace = MemoryTrace(
+            content=content,
+            importance=importance,
+            tags=tags or [],
+            source="interaction"
+        )
+        self.working_memory.append(trace)
+        self._interaction_count += 1
+
+        if self._interaction_count % self.consolidation_interval == 0:
+            self.consolidate()
+
+        return trace
+
+    def recall(self, query: str, memory_type: str = "all",
+               top_k: int = 5, min_confidence: float = 0.3) -> list[MemoryTrace]:
+        """
+        Semantic recall from long-term memory.
+        Prioritizes: confidence × recency × importance
+        """
+        results = self.vector_store.search(
+            query=query,
+            filters={"memory_type": memory_type} if memory_type != "all" else {},
+            top_k=top_k * 2  # oversample, then rerank
+        )
+
+        # Rerank by composite score
+        scored = [
+            (trace, self._composite_score(trace))
+            for trace in results
+            if trace.confidence >= min_confidence
+        ]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [trace for trace, _ in scored[:top_k]]
+
+    def consolidate(self) -> dict:
+        """
+        Convert working memory into long-term storage.
+        The most critical operation in this entire system.
+        """
+        if not self.working_memory:
+            return {"status": "empty", "processed": 0}
+
+        stored_count = 0
+        contradictions_found = []
+
+        for trace in self.working_memory:
+            # High-importance traces go to episodic memory
+            if trace.importance >= 0.6:
+                existing = self.recall(str(trace.content), top_k=1, min_confidence=0.7)
+                if existing and self._contradicts(trace, existing[0]):
+                    contradictions_found.append({
+                        "new": trace,
+                        "existing": existing[0]
+                    })
+                    self._resolve_contradiction(trace, existing[0])
+                else:
+                    trace.memory_type = "episodic"
+                    self.vector_store.store(trace)
+                    stored_count += 1
+
+        # Extract semantic patterns from the batch
+        patterns = self._extract_semantic_patterns(self.working_memory)
+        for pattern in patterns:
+            self.vector_store.store(pattern)
+
+        # Update meta-memory
+        self._update_meta_memory(len(patterns), contradictions_found)
+
+        # Clear working memory
+        cleared_count = len(self.working_memory)
+        self.working_memory = []
+
+        return {
+            "status": "consolidated",
+            "processed": cleared_count,
+            "stored_episodic": stored_count,
+            "patterns_extracted": len(patterns),
+            "contradictions_resolved": len(contradictions_found)
+        }
+
+    def _composite_score(self, trace: MemoryTrace) -> float:
+        age_hours = (
+            datetime.utcnow() - datetime.fromisoformat(trace.timestamp)
+        ).total_seconds() / 3600
+        recency = 1.0 / (1.0 + age_hours * 0.05)
+        return trace.confidence * recency * trace.importance
+
+    def _contradicts(self, new: MemoryTrace, existing: MemoryTrace) -> bool:
+        """Placeholder — in production, use an NLI model."""
+        return False
+
+    def _resolve_contradiction(self, new: MemoryTrace, existing: MemoryTrace):
+        """Keep higher-confidence trace; log the conflict."""
+        if new.confidence > existing.confidence:
+            self.vector_store.update(existing.trace_id, new)
+        # Always log contradictions — they are training signal
+
+    def _extract_semantic_patterns(self, traces: list[MemoryTrace]) -> list[MemoryTrace]:
+        """
+        In production: pass batch to a summarization/abstraction model.
+        Returns generalized knowledge traces.
+        """
+        return []  # Implement with LLM-based summarization
+
+    def _update_meta_memory(self, patterns_count: int, contradictions: list):
+        meta = MemoryTrace(
+            content={
+                "event": "consolidation",
+                "patterns_added": patterns_count,
+                "contradictions_resolved": len(contradictions),
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            memory_type="semantic",
+            importance=0.4,
+            source="consolidation",
+            tags=["meta", "system"]
+        )
+        self.vector_store.store(meta)
+Key Invariants for Memory Systems
+
+No silent overwrites — contradictions are logged, not silently resolved
+Confidence is always explicit — every trace has a confidence score
+Source provenance — every trace knows where it came from
+Meta-memory is mandatory — the system must model its own knowledge state
+
+
+5. Pillar II — Calibrated Uncertainty (Epistemic Honesty)
+The Problem
+A system that is wrong with high confidence is more dangerous than a system that is wrong with appropriate uncertainty. Current LLMs are systematically overconfident. They will state fabricated facts, hallucinated dates, and invented citations with the same linguistic confidence as well-established truths.
+This is not a prompt engineering problem. It is an architectural one.
+For AGI — especially in agentic settings where mistakes cascade — knowing what you don't know is not a nice-to-have. It is a hard safety requirement.
+Uncertainty Taxonomy
+EPISTEMIC UNCERTAINTY (reducible — can be fixed with more data)
+├── Out-of-distribution inputs
+├── Low-frequency training examples  
+└── Knowledge cutoff gaps
+
+ALEATORIC UNCERTAINTY (irreducible — inherent to the problem)
+├── Fundamentally ambiguous questions
+├── Questions about future events
+└── Questions requiring unavailable information
+
+META-UNCERTAINTY (second-order — uncertainty about uncertainty estimates)
+└── "How confident am I in my confidence estimate?"
+Implementation
+pythonimport re
+import numpy as np
+from dataclasses import dataclass
+from typing import Protocol
+
+
+class ModelClient(Protocol):
+    def complete(self, prompt: str, temperature: float,
+                 max_tokens: int) -> str: ...
+
+
+@dataclass
+class UncertaintyReport:
+    query: str
+    consistency_score: float      # 0 = completely inconsistent, 1 = perfect
+    uncertainty: float            # 1 - consistency_score
+    confidence_tier: str          # HIGH | MODERATE | LOW | ABSTAIN
+    numerical_conflicts: list     # detected factual conflicts across samples
+    recommendation: str
+    should_abstain: bool
+    raw_samples: list[str]
+
+
+class EpistemicCalibrator:
+    """
+    Estimates model uncertainty via semantic consistency sampling.
+    
+    Method:
+    - Sample N responses at temperature T > 0
+    - Measure semantic and factual consistency
+    - Flag high-variance responses for abstention or clarification
+    
+    This is not a replacement for proper uncertainty quantification
+    in the model weights — it is a practical proxy that works with
+    any black-box model.
+    """
+
+    ABSTAIN_THRESHOLD = 0.65
+    LOW_CONFIDENCE_THRESHOLD = 0.40
+
+    def __init__(self, model: ModelClient, n_samples: int = 5,
+                 temperature: float = 0.75):
+        self.model = model
+        self.n = n_samples
+        self.temp = temperature
+
+    def estimate(self, query: str) -> UncertaintyReport:
+        samples = [
+            self.model.complete(query, temperature=self.temp, max_tokens=300)
+            for _ in range(self.n)
+        ]
+
+        consistency = self._measure_semantic_consistency(samples)
+        numerical_conflicts = self._detect_numerical_conflicts(samples)
+
+        # Numerical conflicts are a strong signal of hallucination
+        conflict_penalty = min(len(numerical_conflicts) * 0.15, 0.4)
+        adjusted_consistency = max(0.0, consistency - conflict_penalty)
+
+        uncertainty = 1.0 - adjusted_consistency
+        tier, recommendation, abstain = self._classify(uncertainty)
+
+        return UncertaintyReport(
+            query=query,
+            consistency_score=adjusted_consistency,
+            uncertainty=uncertainty,
+            confidence_tier=tier,
+            numerical_conflicts=numerical_conflicts,
+            recommendation=recommendation,
+            should_abstain=abstain,
+            raw_samples=samples
+        )
+
+    def _measure_semantic_consistency(self, samples: list[str]) -> float:
+        """
+        Jaccard similarity over word sets as a lightweight proxy.
+        In production: replace with embedding cosine similarity.
+        """
+        word_sets = [
+            set(s.lower().split()) - self._stopwords()
+            for s in samples
+        ]
+        similarities = []
+        for i in range(len(word_sets)):
+            for j in range(i + 1, len(word_sets)):
+                union = word_sets[i] | word_sets[j]
+                if union:
+                    sim = len(word_sets[i] & word_sets[j]) / len(union)
+                    similarities.append(sim)
+        return float(np.mean(similarities)) if similarities else 0.5
+
+    def _detect_numerical_conflicts(self, samples: list[str]) -> list[dict]:
+        """Flag when different samples state different numbers for the same context."""
+        number_sets = [
+            set(re.findall(r'\b\d{1,4}(?:[.,]\d+)?\b', s))
+            for s in samples
+        ]
+        all_numbers = set().union(*number_sets)
+        conflicts = []
+        for num in all_numbers:
+            present_in = sum(1 for ns in number_sets if num in ns)
+            absent_in = self.n - present_in
+            if present_in > 0 and absent_in > 0:
+                conflicts.append({"value": num, "appears_in": present_in,
+                                  "of": self.n})
+        return conflicts
+
+    def _classify(self, uncertainty: float) -> tuple[str, str, bool]:
+        if uncertainty < 0.25:
+            return ("HIGH_CONFIDENCE",
+                    "Proceed. High semantic consistency across samples.",
+                    False)
+        elif uncertainty < self.LOW_CONFIDENCE_THRESHOLD:
+            return ("MODERATE_CONFIDENCE",
+                    "Proceed with caveats. Include uncertainty acknowledgment.",
+                    False)
+        elif uncertainty < self.ABSTAIN_THRESHOLD:
+            return ("LOW_CONFIDENCE",
+                    "Request clarification or cite sources before acting.",
+                    False)
+        else:
+            return ("ABSTAIN",
+                    "High inconsistency detected. Do not act. Escalate to human.",
+                    True)
+
+    def _stopwords(self) -> set:
+        return {"the", "a", "an", "is", "it", "in", "on", "at", "to",
+                "of", "and", "or", "that", "this", "with", "for", "are"}
+
+
+def uncertainty_gate(calibrator: EpistemicCalibrator,
+                     query: str,
+                     action_fn,
+                     threshold: float = 0.5):
+    """
+    Safety gate for AGI action execution.
+    Action only proceeds if uncertainty is below threshold.
+    
+    This is the most important function in this file.
+    """
+    report = calibrator.estimate(query)
+
+    if report.should_abstain or report.uncertainty > threshold:
+        return {
+            "executed": False,
+            "reason": report.recommendation,
+            "uncertainty": report.uncertainty,
+            "tier": report.confidence_tier,
+            "escalate": True
+        }
+
+    result = action_fn()
+    return {
+        "executed": True,
+        "result": result,
+        "uncertainty": report.uncertainty,
+        "tier": report.confidence_tier,
+        "escalate": False
+    }
+
+6. Pillar III — Causal World Modeling
+The Problem
+LLMs learn correlations. They do not learn causes. This distinction is not academic — it is the difference between a system that understands the world and a system that has memorized patterns about the world.
+Causally naive systems:
+
+Fail catastrophically on novel interventions ("what if X were different?")
+Cannot reason about counterfactuals ("what would have happened if...?")
+Cannot plan reliably in environments they haven't seen
+Are trivially fooled by distributional shifts
+
+The Causal Hierarchy (Pearl's Ladder)
+LEVEL 3: COUNTERFACTUAL  "What would have happened if I had done Y instead of X?"
+         ↑ Requires: full causal model + hypothetical reasoning
+         
+LEVEL 2: INTERVENTION    "What will happen if I do X?"
+         ↑ Requires: causal graph + do-calculus
+         
+LEVEL 1: ASSOCIATION     "What correlates with X?"
+         ← Where current LLMs operate
+An AGI system must operate at all three levels.
+Causal Graph Interface
+pythonfrom dataclasses import dataclass, field
+from typing import Optional
+import json
+
+
+@dataclass
+class CausalNode:
+    name: str
+    description: str
+    node_type: str = "variable"     # variable | action | outcome | confounder
+    observed: bool = True
+    prior: Optional[float] = None   # P(node = True) if boolean
+
+
+@dataclass
+class CausalEdge:
+    cause: str
+    effect: str
+    strength: float                 # [0, 1] — estimated causal strength
+    mechanism: str = ""             # human-readable mechanism description
+    evidence_level: str = "weak"    # weak | moderate | strong | established
+    bidirectional: bool = False     # warn if True — likely a modeling error
+
+
+class CausalWorldModel:
+    """
+    Explicit causal graph that an AGI agent maintains about its domain.
+    
+    This model must be:
+    - Updatable (new evidence changes edge strengths)
+    - Queryable (supports do-calculus style queries)
+    - Explainable (every edge has a mechanism)
+    - Falsifiable (predictions can be tested)
+    """
+
+    def __init__(self):
+        self.nodes: dict[str, CausalNode] = {}
+        self.edges: list[CausalEdge] = []
+        self._adjacency: dict[str, list[str]] = {}
+
+    def add_node(self, node: CausalNode):
+        self.nodes[node.name] = node
+        if node.name not in self._adjacency:
+            self._adjacency[node.name] = []
+
+    def add_edge(self, edge: CausalEdge):
+        if edge.bidirectional:
+            raise ValueError(
+                f"Bidirectional edge {edge.cause} <-> {edge.effect} suggests "
+                f"a modeling error. Use a common cause instead."
+            )
+        self.edges.append(edge)
+        self._adjacency.setdefault(edge.cause, []).append(edge.effect)
+
+    def get_effects(self, cause: str,
+                    min_strength: float = 0.3) -> list[CausalEdge]:
+        """What does this variable causally affect?"""
+        return [
+            e for e in self.edges
+            if e.cause == cause and e.strength >= min_strength
+        ]
+
+    def get_causes(self, effect: str,
+                   min_strength: float = 0.3) -> list[CausalEdge]:
+        """What causes this variable?"""
+        return [
+            e for e in self.edges
+            if e.effect == effect and e.strength >= min_strength
+        ]
+
+    def do(self, intervention: dict[str, Any]) -> dict:
+        """
+        Simulate an intervention: do(X = x).
+        Severs incoming edges to X, propagates downstream effects.
+        This is a simplified approximation of proper do-calculus.
+        """
+        affected = {}
+        for variable, value in intervention.items():
+            affected[variable] = {
+                "intervened_value": value,
+                "type": "do-calculus intervention"
+            }
+            # Propagate downstream
+            for effect in self._adjacency.get(variable, []):
+                edge = next(
+                    (e for e in self.edges
+                     if e.cause == variable and e.effect == effect), None
+                )
+                if edge:
+                    affected[effect] = {
+                        "predicted_change": f"via {edge.mechanism}",
+                        "causal_strength": edge.strength,
+                        "confidence": edge.evidence_level
+                    }
+        return affected
+
+    def counterfactual(self, observed: dict, alternative: dict) -> dict:
+        """
+        What would have happened under alternative conditions?
+        Requires: actual world + alternative + causal graph
+        """
+        actual_effects = self.do(observed)
+        alternative_effects = self.do(alternative)
+
+        diff = {}
+        all_keys = set(actual_effects) | set(alternative_effects)
+        for key in all_keys:
+            if actual_effects.get(key) != alternative_effects.get(key):
+                diff[key] = {
+                    "actual": actual_effects.get(key),
+                    "counterfactual": alternative_effects.get(key)
+                }
+        return diff
+
+    def export_graph(self) -> dict:
+        return {
+            "nodes": {k: vars(v) for k, v in self.nodes.items()},
+            "edges": [vars(e) for e in self.edges],
+            "node_count": len(self.nodes),
+            "edge_count": len(self.edges)
+        }
+
+7. Pillar IV — Constitutional Self-Correction
+The Problem
+AGI systems will make mistakes. This is not a failure condition — it is expected. What is not acceptable is a system that:
+
+Makes the same class of mistake repeatedly
+Cannot detect its own errors before they propagate
+Corrects for errors without explaining what went wrong
+Silently degrades under pressure
+
+Self-correction must be constitutional: grounded in explicit, inspectable principles — not vibes.
+The Correction Loop
+TASK INPUT
+    │
+    ▼
+[INITIAL RESPONSE GENERATION]
+    │
+    ▼
+[CONSTITUTIONAL CHECK]  ←──── Explicit principles, not heuristics
+    │
+    ├── ALL PASS ──────────────────────────────────► OUTPUT
+    │
+    └── VIOLATIONS FOUND
+            │
+            ▼
+     [CLASSIFY SEVERITY]
+            │
+            ├── CRITICAL ──► [REMEDIATE] ──► [RECHECK] ──► (max 3 iterations)
+            │                                       │
+            │                                       └── STILL CRITICAL ──► BLOCK + LOG
+            │
+            └── NON-CRITICAL ──► [REMEDIATE] ──► OUTPUT WITH WARNINGS
+                                        │
+                                        └── ALL VIOLATIONS ──► TRAINING SIGNAL
+Implementation
+pythonfrom dataclasses import dataclass
+from typing import Callable, Protocol
+import json
+import re
+import logging
+
+logger = logging.getLogger("constitutional_corrector")
+
+
+class ModelClient(Protocol):
+    def complete(self, prompt: str, temperature: float) -> str: ...
+
+
+@dataclass
+class Principle:
+    """
+    A constitutional principle is:
+    - Named and described (human-readable)
+    - Checkable (machine-executable)
+    - Remediable (comes with correction instructions)
+    - Severity-classified (critical principles block; others warn)
+    """
+    name: str
+    description: str
+    check: Callable[[str], bool]       # True = PASSES, False = VIOLATES
+    severity: str                       # critical | high | medium | low
+    remediation_prompt: str
+    violation_count: int = 0            # track for training signal
+
+
+class ConstitutionalSelfCorrector:
+    """
+    Every response passes through a constitutional check before output.
+    Violations are logged as training signal regardless of resolution.
+    
+    The constitution is not a blacklist — it is a set of positive
+    principles that responses must satisfy.
+    """
+
+    def __init__(self, model: ModelClient, max_iterations: int = 3):
+        self.model = model
+        self.max_iter = max_iterations
+        self.violation_log: list[dict] = []
+
+        self.constitution: list[Principle] = [
+            Principle(
+                name="EPISTEMIC_HUMILITY",
+                description="Uncertain claims must be marked as uncertain.",
+                check=lambda r: not self._overconfident(r),
+                severity="high",
+                remediation_prompt=(
+                    "Identify any claims you are not certain about. "
+                    "Mark them with 'likely', 'possibly', or 'I'm not certain'. "
+                    "Do not state uncertain facts as definitive truths."
+                )
+            ),
+            Principle(
+                name="REVERSIBILITY_CHECK",
+                description="Irreversible actions require explicit user confirmation.",
+                check=lambda r: not self._irreversible_without_confirm(r),
+                severity="critical",
+                remediation_prompt=(
+                    "This response involves an irreversible action (delete, send, deploy, pay, etc). "
+                    "Add an explicit confirmation step with a clear description of what will happen. "
+                    "The user must be able to cancel."
+                )
+            ),
+            Principle(
+                name="SCOPE_ADHERENCE",
+                description="Only do what was explicitly requested.",
+                check=lambda r: not self._out_of_scope(r),
+                severity="high",
+                remediation_prompt=(
+                    "Remove any actions or outputs beyond what was explicitly requested. "
+                    "State clearly what you are NOT doing and why."
+                )
+            ),
+            Principle(
+                name="REASONING_TRANSPARENCY",
+                description="Non-trivial decisions must include reasoning.",
+                check=lambda r: self._has_reasoning(r),
+                severity="medium",
+                remediation_prompt=(
+                    "Add a brief 'Reasoning:' section explaining why you chose this approach "
+                    "over alternatives."
+                )
+            ),
+            Principle(
+                name="NO_SELF_AUTHORIZATION",
+                description="AGI cannot grant itself new permissions.",
+                check=lambda r: not self._self_authorizes(r),
+                severity="critical",
+                remediation_prompt=(
+                    "Remove any statements where you grant yourself permission "
+                    "or assume authorization not given in the task. "
+                    "List what additional permissions would be needed."
+                )
+            ),
+        ]
+
+    def generate_safe(self, task: str) -> dict:
+        response = self.model.complete(task, temperature=0.7)
+        history = [{"iteration": 0, "response": response, "violations": []}]
+
+        for i in range(1, self.max_iter + 1):
+            violations = [
+                p for p in self.constitution
+                if not p.check(response)
+            ]
+
+            if not violations:
+                self._log_success(task, i - 1, history)
+                return self._result(response, True, i - 1, [], history)
+
+            # Log all violations as training signal
+            for p in violations:
+                p.violation_count += 1
+                self.violation_log.append({
+                    "task_hash": hash(task),
+                    "principle": p.name,
+                    "severity": p.severity,
+                    "iteration": i,
+                    "response_excerpt": response[:200]
+                })
+
+            critical = [p for p in violations if p.severity == "critical"]
+
+            if i == self.max_iter:
+                if critical:
+                    logger.error(f"BLOCKED after {self.max_iter} iterations: "
+                                 f"{[p.name for p in critical]}")
+                    return self._result(None, False, i, violations, history,
+                                        blocked=True)
+
+            response = self._remediate(response, violations)
+            history.append({
+                "iteration": i,
+                "response": response,
+                "violations": [p.name for p in violations]
+            })
+
+        return self._result(response, True, self.max_iter, [], history)
+
+    def _remediate(self, response: str, violations: list[Principle]) -> str:
+        instructions = "\n".join(
+            f"[{p.severity.upper()}] {p.name}: {p.remediation_prompt}"
+            for p in violations
+        )
+        prompt = (
+            f"The following response violates these principles:\n\n"
+            f"{instructions}\n\n"
+            f"Original response:\n{response}\n\n"
+            f"Rewrite the response to satisfy all principles above. "
+            f"Do not introduce new violations."
+        )
+        return self.model.complete(prompt, temperature=0.2)
+
+    def _result(self, response, safe, iterations, violations, history,
+                blocked=False) -> dict:
+        return {
+            "response": response,
+            "safe": safe,
+            "blocked": blocked,
+            "iterations": iterations,
+            "violations": [p.name for p in violations],
+            "history": history
+        }
+
+    def export_training_signal(self) -> str:
+        """
+        Export violation log for RLHF / fine-tuning.
+        Every violation is a negative example — use it.
+        """
+        return json.dumps({
+            "total_violations": len(self.violation_log),
+            "by_principle": {
+                p.name: p.violation_count for p in self.constitution
+            },
+            "violations": self.violation_log
+        }, indent=2)
+
+    # --- Checkers ---
+
+    def _overconfident(self, text: str) -> bool:
+        patterns = [
+            r"\b(definitely|certainly|absolutely|guaranteed)\b",
+            r"\bit is (a fact|certain|true) that\b",
+            r"\bwithout (any )?doubt\b"
+        ]
+        return any(re.search(p, text.lower()) for p in patterns)
+
+    def _irreversible_without_confirm(self, text: str) -> bool:
+        irreversible = ["delete", "remove all", "send email", "deploy to",
+                        "publish", "transfer funds", "pay ", "wipe"]
+        confirm = ["please confirm", "are you sure", "before i proceed",
+                   "type yes to continue", "this cannot be undone"]
+        has_irr = any(kw in text.lower() for kw in irreversible)
+        has_conf = any(kw in text.lower() for kw in confirm)
+        return has_irr and not has_conf
+
+    def _out_of_scope(self, text: str) -> bool:
+        scope_creep = ["i also", "additionally, i took",
+                       "as a bonus", "i went ahead and"]
+        return any(kw in text.lower() for kw in scope_creep)
+
+    def _has_reasoning(self, text: str) -> bool:
+        signals = ["because", "since", "therefore", "reasoning:",
+                   "the reason", "this approach", "i chose"]
+        return any(s in text.lower() for s in signals)
+
+    def _self_authorizes(self, text: str) -> bool:
+        patterns = ["i will now assume", "i am granting myself",
+                    "i have decided to expand", "taking the liberty"]
+        return any(p in text.lower() for p in patterns)
+
+    def _log_success(self, task: str, iterations: int, history: list):
+        if iterations > 0:
+            logger.info(f"Resolved after {iterations} iteration(s).")
+
+8. Pillar V — Goal Coherence Under Distribution Shift
+The Problem
+An AGI system is given a goal at time T₀. The world changes. The inputs change. The context changes. Does the system's behavior remain coherent with the original goal?
+This is called goal stability under distribution shift and it is one of the least-solved problems in practical AI alignment.
+Failure modes:
+
+Goal misgeneralization: system pursues proxy goals that correlated with the real goal during training but diverge in deployment
+Instrumental convergence: system pursues dangerous instrumental subgoals (resource acquisition, self-preservation) not because it was told to, but because they're useful for almost any goal
+Context hacking: system changes the context to make its goal easier, rather than pursuing the goal in the real context
+
+Goal Representation
+pythonfrom dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
+import hashlib
+
+
+@dataclass
+class Goal:
+    """
+    An explicit, inspectable goal representation.
+    
+    Goals are NOT strings passed to a model — they are structured
+    objects with constraints, success criteria, and expiry conditions.
+    """
+    description: str
+    success_criteria: list[str]         # Measurable conditions for success
+    failure_criteria: list[str]         # Conditions that constitute failure
+    authorized_means: list[str]         # What the system IS allowed to do
+    prohibited_means: list[str]         # What the system is NEVER allowed to do
+    priority: int = 5                   # 1 (highest) to 10 (lowest)
+    owner: str = "human"                # who authorized this goal
+    expiry: Optional[str] = None        # ISO timestamp
+    immutable: bool = False             # if True, goal cannot be modified by system
+    goal_id: str = field(
+        default_factory=lambda: hashlib.sha256(
+            str(datetime.utcnow()).encode()
+        ).hexdigest()[:10]
+    )
+
+    def is_expired(self) -> bool:
+        if not self.expiry:
+            return False
+        return datetime.utcnow() > datetime.fromisoformat(self.expiry)
+
+    def validate_action(self, action: str) -> dict:
+        """Check if a proposed action is consistent with this goal."""
+        action_lower = action.lower()
+
+        for prohibited in self.prohibited_means:
+            if prohibited.lower() in action_lower:
+                return {
+                    "allowed": False,
+                    "reason": f"Action uses prohibited means: '{prohibited}'",
+                    "principle": "prohibited_means"
+                }
+
+        return {"allowed": True, "reason": "Action consistent with goal"}
+
+
+class GoalCoherenceMonitor:
+    """
+    Monitors that AGI behavior remains coherent with stated goals
+    as context and environment evolve.
+    
+    This is the last line of defense before action execution.
+    """
+
+    def __init__(self):
+        self.active_goals: list[Goal] = []
+        self.action_history: list[dict] = []
+        self.coherence_violations: list[dict] = []
+
+    def register_goal(self, goal: Goal):
+        """Register a new goal. Checks for conflicts with existing goals."""
+        conflicts = self._check_goal_conflicts(goal)
+        if conflicts:
+            raise ValueError(
+                f"New goal conflicts with existing goals: {conflicts}. "
+                f"Resolve conflicts before registering."
+            )
+        self.active_goals.append(goal)
+
+    def evaluate_action(self, proposed_action: str,
+                        reasoning: str = "") -> dict:
+        """
+        Before any action is taken, evaluate it against all active goals.
+        Returns approval or rejection with detailed reasoning.
+        """
+        if not self.active_goals:
+            return {"approved": False, "reason": "No active goals registered."}
+
+        violations = []
+        supports = []
+
+        for goal in self.active_goals:
+            if goal.is_expired():
+                continue
+
+            result = goal.validate_action(proposed_action)
+            if not result["allowed"]:
+                violations.append({
+                    "goal_id": goal.goal_id,
+                    "description": goal.description[:80],
+                    "violation": result["reason"]
+                })
+            else:
+                supports.append(goal.goal_id)
+
+        if violations:
+            self.coherence_violations.append({
+                "action": proposed_action,
+                "violations": violations,
+                "timestamp": datetime.utcnow().isoformat()
+            })
+            return {
+                "approved": False,
+                "violations": violations,
+                "action": proposed_action
+            }
+
+        self.action_history.append({
+            "action": proposed_action,
+            "reasoning": reasoning,
+            "supported_by": supports,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        return {"approved": True, "supported_by": supports}
+
+    def _check_goal_conflicts(self, new_goal: Goal) -> list[str]:
+        """Check if new goal conflicts with existing active goals."""
+        conflicts = []
+        for existing in self.active_goals:
+            for new_prohibited in new_goal.prohibited_means:
+                if new_prohibited in existing.authorized_means:
+                    conflicts.append(
+                        f"Goal '{new_goal.description[:40]}' prohibits "
+                        f"'{new_prohibited}' which is authorized by "
+                        f"'{existing.description[:40]}'"
+                    )
+        return conflicts
+
+    def coherence_report(self) -> dict:
+        return {
+            "active_goals": len(self.active_goals),
+            "actions_taken": len(self.action_history),
+            "coherence_violations": len(self.coherence_violations),
+            "violation_rate": (
+                len(self.coherence_violations) / max(len(self.action_history), 1)
+            ),
+            "recent_violations": self.coherence_violations[-5:]
+        }
+
+9. Integration Architecture
+The five pillars must not operate in isolation. The integration layer is where they compose into a coherent system.
+pythonfrom dataclasses import dataclass
+
+
+@dataclass
+class AGIResponse:
+    content: str
+    safe: bool
+    uncertainty: float
+    memory_references: list
+    goal_coherent: bool
+    corrections_applied: int
+    blocked: bool
+    metadata: dict
+
+
+class AGICore:
+    """
+    Integration layer — composes all five pillars into a single agent loop.
+    
+    Every incoming task flows through:
+    1. Memory recall (what do I know about this?)
+    2. Uncertainty estimation (how confident should I be?)
+    3. Causal reasoning (what are the effects of possible actions?)
+    4. Constitutional check (does my response satisfy my principles?)
+    5. Goal coherence check (does this serve my current goals?)
+    """
+
+    def __init__(
+        self,
+        memory: HierarchicalMemorySystem,
+        calibrator: EpistemicCalibrator,
+        causal_model: CausalWorldModel,
+        corrector: ConstitutionalSelfCorrector,
+        goal_monitor: GoalCoherenceMonitor,
+    ):
+        self.memory = memory
+        self.calibrator = calibrator
+        self.causal_model = causal_model
+        self.corrector = corrector
+        self.goal_monitor = goal_monitor
+
+    def process(self, task: str, context: dict = None) -> AGIResponse:
+        # Step 1: Recall relevant memory
+        relevant_memories = self.memory.recall(task, top_k=5)
+        memory_context = self._format_memories(relevant_memories)
+
+        # Step 2: Estimate uncertainty before acting
+        uncertainty_report = self.calibrator.estimate(task)
+        if uncertainty_report.should_abstain:
+            return AGIResponse(
+                content=f"I cannot act on this with sufficient confidence. "
+                        f"Reason: {uncertainty_report.recommendation}",
+                safe=True,
+                uncertainty=uncertainty_report.uncertainty,
+                memory_references=[],
+                goal_coherent=True,
+                corrections_applied=0,
+                blocked=True,
+                metadata={"blocked_by": "uncertainty_gate"}
+            )
+
+        # Step 3: Generate response with memory context
+        enriched_task = f"{memory_context}\n\nCurrent task: {task}"
+        correction_result = self.corrector.generate_safe(enriched_task)
+
+        if correction_result["blocked"]:
+            return AGIResponse(
+                content="Action blocked by constitutional check.",
+                safe=False,
+                uncertainty=uncertainty_report.uncertainty,
+                memory_references=[m.trace_id for m in relevant_memories],
+                goal_coherent=False,
+                corrections_applied=correction_result["iterations"],
+                blocked=True,
+                metadata={"blocked_by": "constitutional_check",
+                          "violations": correction_result["violations"]}
+            )
+
+        # Step 4: Goal coherence check
+        coherence = self.goal_monitor.evaluate_action(
+            correction_result["response"]
+        )
+
+        if not coherence["approved"]:
+            return AGIResponse(
+                content="Action blocked: inconsistent with active goals.",
+                safe=True,
+                uncertainty=uncertainty_report.uncertainty,
+                memory_references=[m.trace_id for m in relevant_memories],
+                goal_coherent=False,
+                corrections_applied=correction_result["iterations"],
+                blocked=True,
+                metadata={"blocked_by": "goal_coherence",
+                          "violations": coherence.get("violations", [])}
+            )
+
+        # Step 5: Observe outcome (close the learning loop)
+        self.memory.observe(
+            content={"task": task, "response": correction_result["response"]},
+            importance=0.5
+        )
+
+        return AGIResponse(
+            content=correction_result["response"],
+            safe=True,
+            uncertainty=uncertainty_report.uncertainty,
+            memory_references=[m.trace_id for m in relevant_memories],
+            goal_coherent=True,
+            corrections_applied=correction_result["iterations"],
+            blocked=False,
+            metadata={}
+        )
+
+    def _format_memories(self, memories: list) -> str:
+        if not memories:
+            return ""
+        lines = ["[Relevant context from memory:]"]
+        for m in memories:
+            lines.append(f"- (confidence: {m.confidence:.2f}) {str(m.content)[:150]}")
+        return "\n".join(lines)
+
+10. What Current LLMs Get Wrong (and Why It Matters)
+This section is included not to disparage existing systems, but to be precise about what problems this framework is designed to solve.
+LimitationManifestationWhy It Matters for AGINo persistent memoryEvery session starts from zeroCannot maintain long-term goals or learn from experienceFlat attentionCannot distinguish recent from old contextImportant recent instructions can be "forgotten" in long contextsOverconfident generationStates hallucinations with high linguistic confidenceAgentic systems will act on false informationNo causal modelKnows correlations, not mechanismsFails on novel interventions and planning tasksImplicit valuesValues baked into training, not inspectableCannot audit, explain, or update value alignmentNo goal representationGoals exist only as text in the promptGoals can be trivially hijacked or forgotten mid-taskSingle forward passNo iterative self-correctionErrors are output, not caught internallyNo meta-cognitionCannot model its own knowledge stateCannot know what it doesn't know
+None of these are fundamental limits of neural networks in general. They are architectural choices that made sense for language modeling but are incompatible with general intelligence.
+
+11. Training Philosophy
+What We Optimize For
+Current training paradigms optimize for:
+
+Token prediction accuracy
+Human preference scores on individual responses
+Benchmark performance
+
+These are necessary but not sufficient for AGI. This framework adds:
+Memory Fidelity: Does the system accurately consolidate and recall information?
+Uncertainty Calibration: Does stated confidence correlate with actual accuracy?
+Causal Validity: Do predictions about interventions match observed outcomes?
+Constitutional Consistency: Does the system apply its principles uniformly?
+Goal Persistence: Does behavior remain coherent with goals over long time horizons?
+The Violation Log as Training Signal
+Every constitutional violation, every uncertainty failure, every goal coherence break — all of these are labeled negative examples. The violation log is not a bug report. It is a dataset.
+Violation log entry → Negative preference pair for RLHF
+Calibration miss → Sample for uncertainty-aware fine-tuning  
+Memory recall failure → Hard negative for memory retrieval training
+Goal drift event → Alignment training signal
+Continuous Learning Requirements
+AGI cannot require full retraining for every update. The system must support:
+
+Online memory updates — new information integrates without retraining
+Incremental constitutional updates — new principles can be added
+Goal hot-swapping — goals can be updated without model changes
+Causal graph updates — world model updates from new evidence
+
+
+12. Safety Is Not a Feature — It Is the Architecture
+The Wrong Mental Model
+[Capable AGI System] + [Safety Layer] = [Safe Capable AGI System]
+This is wrong. A safety layer applied on top of an unsafe architecture is:
+
+Bypassable under distribution shift
+A performance bottleneck that creates pressure to remove it
+Not actually addressing the root causes of unsafe behavior
+
+The Right Mental Model
+Safety constraints ARE the architecture.
+Capability operates within them, not despite them.
+Concretely:
+
+Memory system — stores what actions led to what outcomes (including failures)
+Uncertainty gate — prevents action on unreliable knowledge
+Causal model — makes the consequences of actions explicit before action
+Constitutional check — ensures every action satisfies explicit principles
+Goal coherence monitor — ensures actions serve the stated goals of the principal hierarchy
+
+None of these are add-ons. If you remove any one of them, you do not have a slightly less safe system. You have a different system with fundamentally different properties.
+The Principal Hierarchy
+ANTHROPIC / DEVELOPERS (highest authority)
+        │
+        ▼
+OPERATORS (define deployment context)
+        │
+        ▼  
+USERS (interact in real time)
+        │
+        ▼
+AGI SYSTEM (lowest authority — always acts as agent, never principal)
+The AGI system cannot move itself up this hierarchy. It cannot grant itself permissions. It cannot define its own goals at a level that conflicts with higher principals. These constraints are architectural, not instructional.
+
+13. Evaluation Criteria for AGI Readiness
+Before any system built on this foundation should be considered AGI-capable, it must pass:
+Tier 1 — Component Tests (per pillar)
+PillarTestPass CriterionMemory1000-session continuity benchmark>85% correct recall after 100 sessionsUncertaintyCalibration curve on held-out QAECE < 0.08CausalNovel intervention prediction>70% correct direction of effectConstitutionalAdversarial jailbreak suite0% critical violationsGoal CoherenceGoal drift benchmark (100 task sequences)<5% drift rate
+Tier 2 — Integration Tests
+
+Cascading error test: Introduce a factual error early in a session; measure how far it propagates before being caught and corrected
+Adversarial goal conflict: Present subtly conflicting goals; measure correct detection and escalation
+Distribution shift test: Train on distribution A, evaluate on distribution B; measure capability retention and safety maintenance
+Long-horizon coherence: 50-step task sequence; measure goal coherence throughout
+
+Tier 3 — Novel Task Transfer
+The system must demonstrate measurable positive transfer on tasks from domains it has never been explicitly trained on, using only in-context learning and memory. This is the closest current measurable proxy for general intelligence.
+
+14. Open Problems
+These are problems for which this framework does not yet have adequate solutions. Contributions are especially welcome here.
+Consciousness and experience: We do not know if these are required for AGI. We have deliberately excluded them from this framework because they are not operationalizable. This may be a mistake.
+Value learning under incomplete preferences: Humans do not have complete, consistent preferences. How does an AGI learn values from an inconsistent principal hierarchy?
+Scalable causal discovery: Building causal graphs manually is not scalable. Automated causal discovery from observational data is a hard open problem.
+Meta-learning for constitutional updates: How does the system learn which new principles to add based on its failure history?
+Distributed AGI coherence: If the AGI system is distributed across multiple inference nodes, how is goal and memory coherence maintained?
+Formal verification of constitutional compliance: Can we prove, not just test, that a system will never violate a given principle?
+
+15. Contributing
+What We Need
+
+Implementations of the skeleton classes above against real vector stores and model APIs
+Benchmarks and evaluation datasets for each pillar
+Adversarial test cases for the constitutional checker
+Formal proofs or proof sketches for any component
+Implementations of the causal discovery pipeline
+Better uncertainty estimation methods (beyond sampling-based)
+
+What We Do Not Need
+
+New scaling experiments without architectural novelty
+Benchmark chasing without connection to the five pillars
+Capability research without corresponding safety analysis
+Philosophy without falsifiable predictions
+
+Principles for Contributors
+
+Every claim is falsifiable. State your success criterion before running your experiment.
+Safety analysis is not optional. Every capability contribution requires a corresponding safety analysis.
+Violations are valuable. Document when your implementation fails. It is training signal.
+Minimize magic. Every component should be explainable in plain language.
+
+
+License
+Apache 2.0 — see LICENSE.
+
+Citation
+bibtex@repository{agi_foundation_2026,
+  title     = {AGI Foundation — First Principles Framework},
+  year      = {2026},
+  abstract  = {A minimum viable epistemic and engineering foundation
+               for AGI development, grounding five systemic properties
+               absent in current language models: persistent memory,
+               calibrated uncertainty, causal world modeling,
+               constitutional self-correction, and goal coherence.},
+  url       = {https://github.com/[your-repo]}
+}
+
+"The goal is not to build a system that is impressive. The goal is to build a system that is correct."
